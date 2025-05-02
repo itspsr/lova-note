@@ -56,3 +56,8 @@ cython_debug/
 # Git LFS files
 .lfs/
 whisper_env/
+
+lovanote-env/
+venv/
+whisper-env/
+whisper_env/
