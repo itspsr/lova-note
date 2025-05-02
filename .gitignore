@@ -55,3 +55,4 @@ cython_debug/
 
 # Git LFS files
 .lfs/
+whisper_env/
