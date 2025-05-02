@@ -5,3 +5,4 @@ whisper-env/
 uploads/
 *.mp3
 *.wav
+*.mp4
