@@ -1,41 +1,67 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+# C extensions
+*.so
 
-# testing
-/coverage
+# Virtual environments
+venv/
+env/
+.lovanote-env/
+lovanote-env/
+.whisper-env/
+whisper-env/
 
-# next.js
-/.next/
-/out/
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
 
-# production
-/build
+# VS Code settings
+.vscode/
 
-# misc
+# macOS junk
 .DS_Store
-*.pem
 
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
+# Environment variables
+.env
+*.env
 
-# env files (can opt-in for committing if needed)
-.env*
+# Logs and cache
+*.log
+*.tmp
+*.cache/
+.cache/
+*.sqlite3
+*.db
 
-# vercel
-.vercel
+# Audio and transcript folders (if generated)
+uploads/
+transcriptions/
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# Python egg info
+*.egg-info/
+dist/
+build/
+
+# LFS-tracked large files (optional safety)
+*.dylib
+*.pt
+*.ckpt
+
+# Coverage and test results
+htmlcov/
+.coverage
+.tox/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+test-results/
+
+# PyInstaller
+*.spec
+
+# MyPy
+.mypy_cache/
+.dmypy.json
