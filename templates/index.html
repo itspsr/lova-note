@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>LovaNote AI Transcriber</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    body.dark-mode {
+      background-color: #111;
+      color: #f1f1f1;
+    }
+    .dark-mode input, .dark-mode select, .dark-mode textarea {
+      background-color: #222;
+      color: #f1f1f1;
+      border: 1px solid #444;
+    }
+    .dark-mode a { color: #90cdf4; }
+    #darkToggle {
+      margin-bottom: 1rem;
+      padding: 6px 12px;
+      background: #eee;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    body.dark-mode #darkToggle {
+      background: #333;
+      color: white;
+    }
+    #status-msg {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    .bar {
+      width: 100%;
+      background: #ddd;
+      height: 10px;
+      border-radius: 5px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+    #bar-fill {
+      height: 100%;
+      background: #4caf50;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <button id="darkToggle">🌙 Toggle Dark Mode</button>
+
+    <h1>🎙️ LovaNote - AI Voice Transcriber</h1>
+
+    <form id="uploadForm">
+      <label for="audio">Upload Audio</label>
+      <input type="file" id="audio" name="audio" required />
+
+      <label for="lang-select">Language</label>
+      <select id="lang-select" name="lang">
+        <option value="auto">🌐 Auto Detect</option>
+        <option value="hi">🇮🇳 Hindi</option>
+        <option value="en">🇺🇸 English</option>
+      </select>
+
+      <label for="model_size">Model</label>
+      <select id="model_size" name="model_size">
+        <option value="base">⚡ Fast</option>
+        <option value="large">🧠 Accurate</option>
+      </select>
+
+      <button type="submit">Transcribe</button>
+    </form>
+
+    <div id="status-msg"></div>
+
+    <div id="progress" style="display: none;">
+      <p>Transcribing now... please wait ⏳</p>
+      <div class="bar"><div id="bar-fill"></div></div>
+    </div>
+
+    <div id="output" style="display: none;">
+      <p><strong>Detected Language:</strong> <span id="output-lang"></span></p>
+      <p><strong>Duration:</strong> <span id="duration"></span> sec</p>
+      <p><strong>Accuracy:</strong> <span id="accuracy"></span></p>
+      <textarea id="transcript" rows="10"></textarea>
+      <br>
+      <a id="download-pdf" target="_blank">📄 Export PDF</a> |
+      <a id="download-docx" target="_blank">📃 Export DOCX</a>
+      <br>
+      <audio id="audio-player" controls></audio>
+    </div>
+  </div>
+
+  <script>
+    const darkToggle = document.getElementById('darkToggle');
+    darkToggle.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+    });
+
+    const form = document.getElementById('uploadForm');
+    const progress = document.getElementById('progress');
+    const bar = document.getElementById('bar-fill');
+    const output = document.getElementById('output');
+    const transcript = document.getElementById('transcript');
+    const statusMsg = document.getElementById('status-msg');
+    const accuracy = document.getElementById('accuracy');
+    const audioPlayer = document.getElementById('audio-player');
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      submitBtn.disabled = true;
+      progress.style.display = 'block';
+      bar.style.width = '0%';
+      output.style.display = 'none';
+      statusMsg.textContent = "Transcribing now... ⏳";
+      statusMsg.style.color = "orange";
+
+      const interval = setInterval(() => {
+        let width = parseInt(bar.style.width) || 0;
+        if (width < 95) bar.style.width = (width + 5) + '%';
+      }, 300);
+
+      const formData = new FormData(form);
+      const response = await fetch('/upload', { method: 'POST', body: formData });
+      const data = await response.json();
+
+      clearInterval(interval);
+      bar.style.width = '100%';
+      progress.style.display = 'none';
+      submitBtn.disabled = false;
+
+      if (data.error) {
+        statusMsg.textContent = "Error: " + data.error;
+        statusMsg.style.color = "red";
+        return;
+      }
+
+      transcript.value = data.text;
+      document.getElementById('output-lang').innerText = data.language;
+      document.getElementById('duration').innerText = data.duration;
+      accuracy.innerText = data.accuracy;
+      output.style.display = 'block';
+
+      statusMsg.textContent = "Transcribed ✅";
+      statusMsg.style.color = "green";
+
+      const safeFilename = formData.get('audio').name.split('.')[0];
+      document.getElementById('download-pdf').href =
+        `/export/pdf/${safeFilename}?text=${encodeURIComponent(data.text)}&language=${encodeURIComponent(data.language)}&confidence=${encodeURIComponent(data.confidence)}&duration=${encodeURIComponent(data.duration)}&timestamp=${encodeURIComponent(data.timestamp)}`;
+      document.getElementById('download-docx').href =
+        `/export/docx/${safeFilename}?text=${encodeURIComponent(data.text)}&language=${encodeURIComponent(data.language)}&confidence=${encodeURIComponent(data.confidence)}&duration=${encodeURIComponent(data.duration)}&timestamp=${encodeURIComponent(data.timestamp)}`;
+
+      if (data.audioPath) {
+        audioPlayer.src = data.audioPath;
+        audioPlayer.load();
+        audioPlayer.play().catch(e => console.error("Audio play error:", e));
+      }
+    };
+  </script>
+</body>
+</html>

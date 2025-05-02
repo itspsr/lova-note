@@ -1,0 +1,47 @@
+body {
+    background-color: #f7f9fc;
+    color: #333;
+    font-family: 'Segoe UI', sans-serif;
+    padding: 2rem;
+  }
+  
+  .container {
+    max-width: 800px;
+    margin: auto;
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 0 12px rgba(0,0,0,0.1);
+  }
+  
+  #progress {
+    margin: 1rem 0;
+    display: none;
+  }
+  
+  .bar {
+    height: 20px;
+    background: #eee;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  
+  #bar-fill {
+    height: 100%;
+    width: 0%;
+    background: #4caf50;
+    transition: width 0.3s ease;
+  }
+  
+  #output {
+    margin-top: 2rem;
+    display: none;
+  }
+  
+  textarea {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1rem;
+    border-radius: 8px;
+  }
+  

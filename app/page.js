@@ -1,103 +1,225 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import React, { useState } from 'react';
+import { useDropzone } from 'react-dropzone';
+
+const TranscriberApp = () => {
+  const [transcribing, setTranscribing] = useState(false);
+  const [transcription, setTranscription] = useState('');
+  const [error, setError] = useState(null);
+  const [progress, setProgress] = useState(0);
+  const [filePreview, setFilePreview] = useState(null);
+  const [files, setFiles] = useState([]);
+  const [selectedLanguage, setSelectedLanguage] = useState('en');
+
+  // Drag-and-drop setup
+  const { getRootProps, getInputProps } = useDropzone({
+    onDrop: (acceptedFiles) => {
+      setFiles(acceptedFiles);
+      setFilePreview(URL.createObjectURL(acceptedFiles[0]));
+    },
+  });
+
+  // Handle file change (for both drag-and-drop and file picker)
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFiles([file]);
+      setFilePreview(URL.createObjectURL(file));
+    }
+  };
+
+  // Handle language selection
+  const handleLanguageChange = (e) => {
+    setSelectedLanguage(e.target.value);
+  };
+
+  const handleUpload = async () => {
+    const formData = new FormData();
+    // Ensure file is correctly appended with the name 'audio'
+    files.forEach((file) => formData.append('audio', file));
+    formData.append('language', selectedLanguage);
+
+    setTranscribing(true);
+    setTranscription('');
+    setError(null);
+    setProgress(0); // Reset progress bar
+
+    try {
+      const response = await fetch('/api/transcribe', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          // Do not manually set 'Content-Type', it will be set automatically for multipart/form-data
+        },
+      });
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+      let partialText = '';
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        partialText += decoder.decode(value, { stream: true });
+
+        // Check if there's progress information in the response
+        if (partialText.includes('Progress:')) {
+          const match = partialText.match(/Progress:\s*(\d+)%/);
+          if (match) {
+            setProgress(parseInt(match[1]));
+            partialText = ''; // Clear the buffer
+          }
+        }
+
+        // If the response contains the full transcription
+        if (partialText.includes('Transcription:')) {
+          setTranscription(partialText);
+          break;
+        }
+      }
+    } catch (err) {
+      setError('Something went wrong');
+    } finally {
+      setTranscribing(false);
+      setProgress(0); // Reset progress after finishing
+    }
+  };
+
+  const handleClear = () => {
+    setTranscription('');
+    setFiles([]);
+    setFilePreview(null);
+    setProgress(0);
+    setError(null);
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div
+      style={{
+        backgroundColor: '#1A1A1A',
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'white',
+        padding: '20px',
+      }}
+    >
+      <h1 style={{ fontSize: '2rem', marginBottom: '20px' }}>LovaNote Transcriber</h1>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      {/* Drag-and-drop area */}
+      <div
+        {...getRootProps()}
+        style={{
+          border: '2px dashed #4CAF50',
+          padding: '40px',
+          borderRadius: '8px',
+          cursor: 'pointer',
+          textAlign: 'center',
+          marginBottom: '20px',
+        }}
+      >
+        <input {...getInputProps()} />
+        <p>Drag & drop your audio file here, or click to select one.</p>
+      </div>
+
+      {/* File preview */}
+      {filePreview && (
+        <div style={{ marginBottom: '20px' }}>
+          <p>Selected file: {files[0].name}</p>
+          <audio controls src={filePreview}></audio>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+      )}
+
+      {/* Language selector */}
+      <select
+        value={selectedLanguage}
+        onChange={handleLanguageChange}
+        style={{
+          padding: '10px',
+          fontSize: '1rem',
+          marginBottom: '20px',
+          borderRadius: '8px',
+          border: '1px solid #ccc',
+          backgroundColor: '#2C3E50',
+          color: 'white',
+        }}
+      >
+        <option value="en">English</option>
+        <option value="hi">Hindi</option>
+        <option value="ml">Malayalam</option>
+        <option value="ta">Tamil</option>
+        {/* Add more languages as needed */}
+      </select>
+
+      {/* Upload button */}
+      <button
+        onClick={handleUpload}
+        style={{
+          backgroundColor: '#4CAF50',
+          padding: '10px 20px',
+          borderRadius: '8px',
+          cursor: 'pointer',
+          fontWeight: 'bold',
+          marginBottom: '20px',
+          transition: 'background-color 0.3s',
+        }}
+      >
+        {transcribing ? 'Transcribing...' : 'Start Transcription'}
+      </button>
+
+      {/* Clear button */}
+      <button
+        onClick={handleClear}
+        style={{
+          backgroundColor: '#E74C3C',
+          padding: '10px 20px',
+          borderRadius: '8px',
+          cursor: 'pointer',
+          fontWeight: 'bold',
+          marginBottom: '20px',
+          transition: 'background-color 0.3s',
+        }}
+      >
+        Clear
+      </button>
+
+      {/* Progress bar */}
+      {transcribing && (
+        <div style={{ width: '100%', backgroundColor: '#ccc', borderRadius: '8px' }}>
+          <div
+            style={{
+              height: '10px',
+              width: `${progress}%`,
+              backgroundColor: '#4CAF50',
+              borderRadius: '8px',
+            }}
+          ></div>
+        </div>
+      )}
+
+      {/* Transcription result */}
+      {transcription && (
+        <div
+          style={{
+            backgroundColor: '#2C3E50',
+            padding: '15px',
+            borderRadius: '10px',
+            maxWidth: '90%',
+            marginTop: '20px',
+          }}
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          <h2>Transcription:</h2>
+          <p>{transcription}</p>
+        </div>
+      )}
+
+      {/* Error message */}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
     </div>
   );
-}
+};
+
+export default TranscriberApp;

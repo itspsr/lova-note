@@ -1,0 +1,7 @@
+Flask==2.3.2
+openai-whisper
+torch
+python-docx
+fpdf
+langdetect
+python-dotenv
