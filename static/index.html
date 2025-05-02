@@ -1,111 +1,179 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LovaNote AI Transcriber</title>
+    <title>LovaNote - Cloud Uploader</title>
     <style>
+        /* General Page Styles */
         body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            background-color: #f7f7f7;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        h1 {
+            font-family: 'Arial', sans-serif;
+            background-color: #121212;
+            color: #fff;
             text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1,
+        h2,
+        h3 {
+            font-family: 'Helvetica Neue', sans-serif;
+            color: #fff;
             margin-bottom: 20px;
         }
-        input[type="file"] {
-            display: block;
-            margin: 0 auto 20px;
+
+        /* Layout */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 30px;
         }
-        button {
-            display: block;
-            margin: 20px auto;
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: white;
+
+        .header {
+            background-color: #1F1F1F;
+            padding: 50px 0;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .button {
+            padding: 12px 30px;
+            font-size: 16px;
+            background-color: #6200EA;
             border: none;
-            border-radius: 4px;
+            color: #fff;
+            border-radius: 30px;
             cursor: pointer;
+            transition: background-color 0.3s;
+            text-transform: uppercase;
         }
-        button:hover {
-            background-color: #45a049;
+
+        .button:hover {
+            background-color: #3700B3;
         }
-        #transcription {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #e9f7e9;
-            border: 1px solid #4CAF50;
-            border-radius: 4px;
-            white-space: pre-wrap;
-        }
-        #loading {
+
+        /* File input style */
+        input[type="file"] {
             display: none;
-            text-align: center;
-            margin-top: 20px;
         }
+
+        .file-input-label {
+            display: inline-block;
+            background-color: #6200EA;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 30px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .file-input-label:hover {
+            background-color: #3700B3;
+        }
+
+        /* Audio player styling */
+        audio {
+            width: 80%;
+            border-radius: 8px;
+            margin-top: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Result Styling */
+        #transcriptionResult {
+            margin-top: 20px;
+            font-size: 18px;
+            background-color: #333;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            margin: 30px auto;
+            text-align: left;
+            color: #ddd;
+        }
+
+        /* Footer */
+        .footer {
+            background-color: #1F1F1F;
+            padding: 20px;
+            margin-top: 50px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 14px;
+            color: #bbb;
+        }
+
     </style>
 </head>
+
 <body>
+    <div class="container">
+        <div class="header">
+            <h1>LovaNote Cloud Uploader</h1>
+            <h2>Upload Your Audio File for Transcription</h2>
+        </div>
 
-<div class="container">
-    <h1>LovaNote AI Transcriber</h1>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <label for="fileInput" class="file-input-label">Choose an Audio File</label>
+            <input type="file" id="fileInput" name="file" accept="audio/*" required onchange="uploadAndTranscribe()">
+        </form>
 
-    <!-- File upload form -->
-    <input type="file" id="fileInput" accept=".mp3">
-    <button onclick="uploadFile()">Upload and Transcribe</button>
+        <h3>Playback and Transcribe Audio</h3>
+        <audio controls id="audioPlayer">
+            <source id="audioSource" src="" type="audio/mp3">
+            Your browser does not support the audio element.
+        </audio>
 
-    <div id="loading">Transcribing... Please wait.</div>
+        <br><br>
 
-    <!-- Transcription result -->
-    <div id="transcription"></div>
-</div>
+        <div id="transcriptionResult"></div>
 
-<script>
-    // Function to handle file upload and transcription
-    function uploadFile() {
-        const fileInput = document.getElementById('fileInput');
-        const file = fileInput.files[0];
+    </div>
 
-        if (!file) {
-            alert("Please select a file to upload.");
-            return;
+    <div class="footer">
+        <p>Powered by LovaNote. Transforming audio to text with ease.</p>
+    </div>
+
+    <script>
+        function uploadAndTranscribe() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+
+            // Create a FormData object to upload the file
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Send the file to the backend
+            fetch('/upload/', {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                const uploadedFileName = data.filename;
+                document.getElementById('audioSource').src = `/static/${uploadedFileName}`;
+                const audioPlayer = document.getElementById('audioPlayer');
+                audioPlayer.load();  // Reload audio source for playback
+
+                // Automatically trigger transcription
+                fetch(`/transcribe/${uploadedFileName}`)
+                    .then(response => response.json())
+                    .then(transcriptionData => {
+                        document.getElementById("transcriptionResult").innerText = transcriptionData.transcription;
+                    })
+                    .catch(err => {
+                        document.getElementById("transcriptionResult").innerText = "Error in transcription.";
+                    });
+            })
+            .catch(err => {
+                console.error('Error uploading file:', err);
+            });
         }
-
-        // Show loading text
-        document.getElementById('loading').style.display = "block";
-        document.getElementById('transcription').innerHTML = "";
-
-        const formData = new FormData();
-        formData.append("file", file);
-
-        fetch('/upload', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('loading').style.display = "none";
-            if (data.transcription) {
-                document.getElementById('transcription').innerText = "Transcription:\n\n" + data.transcription;
-            } else if (data.error) {
-                document.getElementById('transcription').innerText = "Error: " + data.error;
-            }
-        })
-        .catch(error => {
-            document.getElementById('loading').style.display = "none";
-            document.getElementById('transcription').innerText = "An error occurred: " + error.message;
-        });
-    }
-</script>
-
+    </script>
 </body>
+
 </html>
