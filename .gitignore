@@ -113,3 +113,8 @@ temp*/
 .env.*
 *.sqlite3
 
+uploads/
+temp_*.mp3
+__pycache__/
+*.wav
+*.mp3
