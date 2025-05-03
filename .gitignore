@@ -73,3 +73,43 @@ __pycache__/
 node_modules/
 uploads/
 temp*
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+*.log
+
+# Virtual environments
+venv/
+env/
+lovanote-env/
+whisper-env/
+
+# Node.js
+node_modules/
+package-lock.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Uploads & Temp
+uploads/
+temp*/
+
+# IDEs & Editors
+.vscode/
+.idea/
+*.swp
+
+# Heroku
+*.slugignore
+
+# Other
+.env
+.env.*
+*.sqlite3
+
