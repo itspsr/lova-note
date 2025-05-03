@@ -67,3 +67,9 @@ whisper-env/
 whisper_env/
 lovanote-env/
 whisper-env/
+lovanote-env/
+whisper-env/
+__pycache__/
+node_modules/
+uploads/
+temp*
